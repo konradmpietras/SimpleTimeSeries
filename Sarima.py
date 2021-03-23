@@ -2,16 +2,31 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_squared_error
+from dateutil.relativedelta import relativedelta
 
-# TODO przeczytać https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_internet.html
-# TODO dorobienie rozróżnienia predykcji one-step-ahead i dłuższej
+# TODO testy
+# TODO dokumentacja metod
 
 
 class Sarima:
-    def __init__(self, y):
+    """
+    Works only for monthly data (month start index)
+    """
+
+    def __init__(self, y, horizon=None):
+        """
+        :param y: series with date index
+        :param horizon: how many steps ahead model should predict values.
+            If None, model will not use any information to create prediction besides train series.
+        """
+
         self.y = y
-        self.results = None
+        self.horizon = horizon
+
+        self.order_params = None
+        self.seasonal_order_params = None
 
     def plot_acf(self):
         from statsmodels.graphics.tsaplots import plot_acf
@@ -29,16 +44,17 @@ class Sarima:
         print("If PACF plot drops off at lag n -> use p=n, q=0\n"
               "If PACF plot drop is more gradual -> use MA term (p=0)")
 
-    def hiperparameter_search(self, metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
+    def hiperparameter_search_fit(self, metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
                               D=[0, 1], Q=[0, 1], s=12, verbose=1):
-        order_space = itertools.product(p, d, q)
-        seasonal_order_space = itertools.product(P, D, Q, [s])
-        search_space = list(itertools.product(order_space, seasonal_order_space))
+
+        search_space = self._get_search_space(p_list=p, d_list=d, q_list=q, P_list=P, D_list=D, Q_list=Q, s=s)
 
         if metric in ['AIC', 'BIC']:
-            return self._information_criterion_search(metric=metric, search_space=search_space, verbose=verbose)
+            self.order_params, self.seasonal_order_params = \
+                self._information_criterion_search(metric=metric, search_space=search_space, verbose=verbose)
         elif metric == 'mse':
-            return self._validation_based_search(split_fraction=split_fraction, metric=metric,
+            self.order_params, self.seasonal_order_params = \
+                self._validation_based_search(split_fraction=split_fraction, metric=metric,
                                                  search_space=search_space, verbose=verbose)
         else:
             raise Exception(f"Invalid metric param value {metric}\n Allowed are 'AIC', 'BIC', 'mse'")
@@ -57,42 +73,70 @@ class Sarima:
                             "Q is a number of previous prediction errors to consider for seasonal component\n "
                             "s is a number od periods in season")
 
-        model = self._get_clean_model(y=self.y, order=order, seasonal_order=seasonal_order)
+        self.order_params = order
+        self.seasonal_order_params = seasonal_order
 
-        self.results = model.fit()
-
-    def predict(self, start_index, end_index, plot=True):
+    def predict(self, test_data, plot=True):
         self._check_fitted()
 
-        prediction = self.results.get_prediction(start=start_index, end=end_index)
+        if self.horizon is not None:
+            prediction = pd.Series(index=test_data.index, dtype=float)
+            conf_intervals = pd.DataFrame(index=test_data.index, columns=['lower y', 'upper y'], dtype=float)
+
+            for index in test_data.index:
+                last_data_index = index + relativedelta(months=-self.horizon)
+
+                horizon_input_data = self._concat_series(self.y, test_data.loc[:last_data_index])
+                model = self._get_clean_model(y=horizon_input_data, order=self.order_params,
+                                              seasonal_order=self.seasonal_order_params)
+                results = model.fit()
+                prediction_data = results.get_prediction(start=index, end=index)
+
+                conf_intervals.loc[index, ['lower y', 'upper y']] = prediction_data.conf_int().loc[index]
+                prediction.loc[index] = prediction_data.predicted_mean.loc[index]
+
+        else:
+            model = self._get_clean_model(y=self.y, order=self.order_params, seasonal_order=self.seasonal_order_params)
+            results = model.fit()
+
+            prediction_data = results.get_prediction(start=test_data.index[0], end=test_data.index[-1])
+            conf_intervals = prediction_data.conf_int()
+            prediction = prediction_data.predicted_mean
 
         if plot:
-            conf_intervals = prediction.conf_int()
-
             ax = self.y.plot(label='True values')
-            prediction.predicted_mean.plot(ax=ax, label='Predicted values')
+            prediction.plot(ax=ax, label='Predicted values')
+
             ax.fill_between(conf_intervals.index, conf_intervals.iloc[:, 0], conf_intervals.iloc[:, 1], color='k',
                             alpha=.2)
             plt.legend()
-
             plt.show()
 
-        return prediction.predicted_mean
+        return prediction
 
     def analyse_results(self):
         self._check_fitted()
 
-        self.results.plot_diagnostics(figsize=(15, 12))
+        model = self._get_clean_model(y=self.y, order=self.order_params, seasonal_order=self.seasonal_order_params)
+
+        results = model.fit()
+        results.plot_diagnostics(figsize=(15, 12))
         plt.show()
 
-        print(self.results.summary())
+        print(results.summary())
 
     def _check_fitted(self):
-        if self.results is None:
+        if self.order_params is None or self.seasonal_order_params is None:
             raise Exception("You should fit model first")
 
+    @staticmethod
+    def _get_search_space(p_list, d_list, q_list, P_list, D_list, Q_list, s):
+        order_space = itertools.product(p_list, d_list, q_list)
+        seasonal_order_space = itertools.product(P_list, D_list, Q_list, [s])
+        return list(itertools.product(order_space, seasonal_order_space))
+
     def _information_criterion_search(self, metric, search_space, verbose):
-        best_matric_value = np.inf
+        best_metric_value = np.inf
         best_params = None
 
         for order, seasonal_order in search_space:
@@ -106,12 +150,12 @@ class Sarima:
             else:
                 raise Exception(f"Invalid information criterion {metric}\n Allowed are 'AIC', 'BIC'")
 
-            if metric_value < best_matric_value:
-                best_matric_value = metric_value
+            if metric_value < best_metric_value:
+                best_metric_value = metric_value
                 best_params = order, seasonal_order
 
                 if verbose > 0:
-                    print(f"  Found better parameters {best_params} with {metric} value of {best_matric_value}")
+                    print(f"  Found better parameters {best_params} with {metric} value of {best_metric_value}")
 
         return best_params
 
@@ -120,31 +164,51 @@ class Sarima:
         return self.y.iloc[:split_point], self.y.iloc[split_point:]
 
     def _validation_based_search(self, split_fraction, metric, search_space, verbose):
-        best_matric_value = np.inf
+        best_metric_value = np.inf
         best_params = None
 
         train_series, validation_series = self._train_val_split(split_fraction=split_fraction)
 
-        for order, seasonal_order in search_space:
-            model = self._get_clean_model(y=train_series, order=order, seasonal_order=seasonal_order)
-            results = model.fit()
+        model = Sarima(y=train_series, horizon=self.horizon)
 
-            val_prediction = results.get_prediction(start=validation_series.index[0], end=validation_series.index[-1])
+        for order, seasonal_order in search_space:
+            model.fit(order=order, seasonal_order=seasonal_order)
+
+            val_prediction = model.predict(test_data=validation_series, plot=False)
 
             if metric == 'mse':
                 metric_value = mean_squared_error(y_true=validation_series, y_pred=val_prediction)
             else:
                 raise Exception(f"Invalid criterion {metric}\n Allowed is 'mse'")
-
-            if metric_value < best_matric_value:
-                best_matric_value = metric_value
+            iter_test_data
+            if metric_value < best_metric_value:
+                best_metric_value = metric_value
                 best_params = order, seasonal_order
 
                 if verbose > 0:
-                    print(f"  Found better parameters {best_params} with {metric} value of {best_matric_value}")
+                    print(f"  Found better parameters {best_params} with {metric} value of {best_metric_value}")
 
         return best_params
 
-    def _get_clean_model(self, y, order, seasonal_order):
+    @staticmethod
+    def _get_clean_model(y, order, seasonal_order):
         return SARIMAX(y, order=order, seasonal_order=seasonal_order, enforce_stationarity=True,
-                        enforce_invertibility=True)
+                       enforce_invertibility=True)
+
+    @staticmethod
+    def _concat_series(s1, s2):
+        intersected_index = list(set(s1.index).intersection(s2.index))
+
+        if len(intersected_index) > 0:
+            if not s1.loc[intersected_index].equals(s2.loc[intersected_index]):
+                raise Exception(f"Different values for the same timesteps {s1.loc[intersected_index]} and "
+                                f"{s2.loc[intersected_index]}")
+
+        s2 = s2.loc[s1.index[-1] + relativedelta(months=1):]
+
+        if len(s2) == 0:
+            return s1
+
+        full_index = pd.date_range(start=s1.index[0], end=s2.index[-1], freq='MS')
+
+        return pd.concat([s1, s2]).reindex(index=full_index)
