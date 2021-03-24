@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from Sarima import Sarima
 from dateutil.relativedelta import relativedelta
 
@@ -71,6 +72,7 @@ def predict_with_intersected_series_with_different_values():
 
     raise Exception("Validation should have failed")
 
+
 def predict_with_new_series_h1():
     train_series = pd.Series(get_ar2_process_values(n_samples=24),
                              index=pd.date_range('2013-01-01', freq='MS', periods=24))
@@ -104,19 +106,22 @@ def compare_incremantal_prediction():
 
     model = Sarima(y=train_series.iloc[:12], horizon=4)
     model.fit(order=(2, 0, 0), seasonal_order=(0, 0, 0, 2))
-    test_series = train_series.iloc[16:]
+    test_series = train_series.iloc[12:]
     normal_prediction = model.predict(test_data=test_series, plot=False)
 
-    i = 1
-    for index in test_series.index:
-        iter_test_data = train_series.iloc[:12+i]
-        result_index = pd.date_range(iter_test_data.index.min(), iter_test_data.index.max() + relativedelta(months=4),
-                                     freq='MS')
+    msg = ""
+
+    for index in test_series.index[4:]:
+        last_index = index - relativedelta(months=4)
+        iter_test_data = train_series.loc[:last_index]
+        result_index = pd.date_range(iter_test_data.index.min(), index, freq='MS')
         iter_test_data = iter_test_data.reindex(result_index)
         inc_pred = model.predict(iter_test_data, plot=False).loc[index]
-        print(f"Should be {normal_prediction.loc[index]}. Got {inc_pred}")
 
-        i += 1
+        msg += f"Should be {normal_prediction.loc[index]}. Got {inc_pred} " \
+               f"({np.isclose(normal_prediction.loc[index], inc_pred)})\n"
+
+    print(msg)
 
 
 def get_ar2_process_values(n_samples):

@@ -6,9 +6,6 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error
 from dateutil.relativedelta import relativedelta
 
-# TODO testy
-# TODO dokumentacja metod
-
 
 class Sarima:
     """
@@ -22,7 +19,7 @@ class Sarima:
             If None, model will not use any information to create prediction besides train series.
         """
 
-        self.y = y
+        self.train_series = y
         self.horizon = horizon
 
         self.order_params = None
@@ -31,7 +28,7 @@ class Sarima:
     def plot_acf(self):
         from statsmodels.graphics.tsaplots import plot_acf
 
-        plot_acf(self.y)
+        plot_acf(self.train_series)
         print("If on ACF plot there is a positive autocorrelation at lag 1 and plot is decaing towards 0 ->"
               " use AR model (q=0)\n"
               "If on ACF plot there is a negative autocorrelation at lag 1 and plot drops sharply after few lags ->"
@@ -40,12 +37,25 @@ class Sarima:
     def plot_pacf(self):
         from statsmodels.graphics.tsaplots import plot_pacf
 
-        plot_pacf(self.y)
+        plot_pacf(self.train_series)
         print("If PACF plot drops off at lag n -> use p=n, q=0\n"
               "If PACF plot drop is more gradual -> use MA term (p=0)")
 
     def hiperparameter_search_fit(self, metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
                               D=[0, 1], Q=[0, 1], s=12, verbose=1):
+        """
+        :param metric: one of 'AIC', 'BIC', 'mse'. Metric used to choose best set of parameters
+        :param split_fraction: used in case of mteric 'mse' to create validation set to assess accuracy. 0.8 means that
+            first 80% of data is used as training data and rest as validation set
+        :param p: list of all values to check
+        :param d: list of all values to check
+        :param q: list of all values to check
+        :param P: list of all values to check
+        :param D: list of all values to check
+        :param Q: list of all values to check
+        :param s: cycle lenght. For monthly data it means how many months is one season.
+        :param verbose: 0 means no additional information is printed on screen
+        """
 
         search_space = self._get_search_space(p_list=p, d_list=d, q_list=q, P_list=P, D_list=D, Q_list=Q, s=s)
 
@@ -54,8 +64,8 @@ class Sarima:
                 self._information_criterion_search(metric=metric, search_space=search_space, verbose=verbose)
         elif metric == 'mse':
             self.order_params, self.seasonal_order_params = \
-                self._validation_based_search(split_fraction=split_fraction, metric=metric,
-                                                 search_space=search_space, verbose=verbose)
+                self._validation_based_search(split_fraction=split_fraction, metric=metric, search_space=search_space,
+                                              verbose=verbose)
         else:
             raise Exception(f"Invalid metric param value {metric}\n Allowed are 'AIC', 'BIC', 'mse'")
 
@@ -86,9 +96,9 @@ class Sarima:
             for index in test_data.index:
                 last_data_index = index + relativedelta(months=-self.horizon)
 
-                horizon_input_data = self._concat_series(self.y, test_data.loc[:last_data_index])
-                model = self._get_clean_model(y=horizon_input_data, order=self.order_params,
-                                              seasonal_order=self.seasonal_order_params)
+                horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_data_index])
+                model = Sarima._get_clean_model(y=horizon_input_data, order=self.order_params,
+                                                seasonal_order=self.seasonal_order_params)
                 results = model.fit()
                 prediction_data = results.get_prediction(start=index, end=index)
 
@@ -96,7 +106,7 @@ class Sarima:
                 prediction.loc[index] = prediction_data.predicted_mean.loc[index]
 
         else:
-            model = self._get_clean_model(y=self.y, order=self.order_params, seasonal_order=self.seasonal_order_params)
+            model = Sarima._get_clean_model(y=self.train_series, order=self.order_params, seasonal_order=self.seasonal_order_params)
             results = model.fit()
 
             prediction_data = results.get_prediction(start=test_data.index[0], end=test_data.index[-1])
@@ -104,7 +114,7 @@ class Sarima:
             prediction = prediction_data.predicted_mean
 
         if plot:
-            ax = self.y.plot(label='True values')
+            ax = self.train_series.plot(label='True values')
             prediction.plot(ax=ax, label='Predicted values')
 
             ax.fill_between(conf_intervals.index, conf_intervals.iloc[:, 0], conf_intervals.iloc[:, 1], color='k',
@@ -117,7 +127,8 @@ class Sarima:
     def analyse_results(self):
         self._check_fitted()
 
-        model = self._get_clean_model(y=self.y, order=self.order_params, seasonal_order=self.seasonal_order_params)
+        model = Sarima._get_clean_model(y=self.train_series, order=self.order_params,
+                                        seasonal_order=self.seasonal_order_params)
 
         results = model.fit()
         results.plot_diagnostics(figsize=(15, 12))
@@ -140,7 +151,7 @@ class Sarima:
         best_params = None
 
         for order, seasonal_order in search_space:
-            model = self._get_clean_model(y=self.y, order=order, seasonal_order=seasonal_order)
+            model = self._get_clean_model(y=self.train_series, order=order, seasonal_order=seasonal_order)
             results = model.fit()
 
             if metric == 'AIC':
@@ -160,8 +171,8 @@ class Sarima:
         return best_params
 
     def _train_val_split(self, split_fraction):
-        split_point = split_fraction * len(self.y)
-        return self.y.iloc[:split_point], self.y.iloc[split_point:]
+        split_point = split_fraction * len(self.train_series)
+        return self.train_series.iloc[:split_point], self.train_series.iloc[split_point:]
 
     def _validation_based_search(self, split_fraction, metric, search_space, verbose):
         best_metric_value = np.inf
@@ -180,7 +191,7 @@ class Sarima:
                 metric_value = mean_squared_error(y_true=validation_series, y_pred=val_prediction)
             else:
                 raise Exception(f"Invalid criterion {metric}\n Allowed is 'mse'")
-            iter_test_data
+
             if metric_value < best_metric_value:
                 best_metric_value = metric_value
                 best_params = order, seasonal_order
@@ -193,7 +204,7 @@ class Sarima:
     @staticmethod
     def _get_clean_model(y, order, seasonal_order):
         return SARIMAX(y, order=order, seasonal_order=seasonal_order, enforce_stationarity=True,
-                       enforce_invertibility=True)
+                       enforce_invertibility=True, disp=False)
 
     @staticmethod
     def _concat_series(s1, s2):
