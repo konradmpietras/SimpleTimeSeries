@@ -141,18 +141,18 @@ def get_ar2_process_values(n_samples):
     return ret
 
 
-# predict_with_train_series_h1()
-# predict_with_train_series_h4()
-# predict_with_train_series_hNone()
+predict_with_train_series_h1()
+predict_with_train_series_h4()
+predict_with_train_series_hNone()
 
-# predict_with_intersected_series_h1()
-# predict_with_intersected_series_h4()
-# predict_with_intersected_series_hNone()
+predict_with_intersected_series_h1()
+predict_with_intersected_series_h4()
+predict_with_intersected_series_hNone()
 
-# predict_with_intersected_series_with_different_values()
+predict_with_intersected_series_with_different_values()
 
-# predict_with_new_series_h1()
-# predict_with_new_series_h3()
-# predict_with_new_series_hNone()
+predict_with_new_series_h1()
+predict_with_new_series_h3()
+predict_with_new_series_hNone()
 
 compare_incremantal_prediction()
