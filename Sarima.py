@@ -114,7 +114,7 @@ class Sarima:
             prediction = prediction_data.predicted_mean
 
         if plot:
-            ax = self.train_series.plot(label='True values')
+            ax = test_data.plot(label='True values')
             prediction.plot(ax=ax, label='Predicted values')
 
             ax.fill_between(conf_intervals.index, conf_intervals.iloc[:, 0], conf_intervals.iloc[:, 1], color='k',
