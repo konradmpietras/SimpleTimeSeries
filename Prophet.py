@@ -1,10 +1,10 @@
 import fbprophet
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
-from fbprophet.diagnostics import cross_validation
-from fbprophet.diagnostics import performance_metrics
+from sklearn.metrics import mean_squared_error
 
 
 class Prophet:
@@ -35,33 +35,32 @@ class Prophet:
         self.changepoint_prior_scale = changepoint_prior_scale
 
     def hiperparameter_search_fit(self, seasonality_modes=['additive', 'multiplicative'],
-                                  changepoint_prior_scale_list=[0.001, 0.01, 0.05, 0.1, 0.5], verbose=1):
+                                  changepoint_prior_scale_list=[0.001, 0.01, 0.05, 0.1, 0.5],
+                                  split_fraction=0.8, verbose=1):
 
         best_metric_value = np.inf
         best_params = None
 
-        train_data = self._prepare_input_data(self.train_series)
+        train_series, validation_series = self._train_val_split(split_fraction=split_fraction)
+
         for seasonality_mode in seasonality_modes:
             for changepoint_prior_scale in changepoint_prior_scale_list:
-                model = self._get_clean_model(seasonality_mode=seasonality_mode,
-                                              changepoint_prior_scale=changepoint_prior_scale)\
-                    .fit(train_data)
+                model = Prophet(y=train_series, horizon=self.horizon, ub=self.ub, lb=self.lb)
+                model.fit(seasonality_mode=seasonality_mode, changepoint_prior_scale=changepoint_prior_scale)
 
-                cutoffs = pd.date_range(start=self.train_series.index[12], end=self.train_series.index[-1], freq='2MS')
-                df_cv = cross_validation(model, horizon=f'{self.horizon * 30} days', cutoffs=cutoffs)
-                df_p = performance_metrics(df_cv, rolling_window=1)
-                metric_value = df_p['rmse'].values[0]
+                val_prediction = model.predict(test_data=validation_series, plot=False)
+                metric_value = mean_squared_error(y_true=validation_series, y_pred=val_prediction)
 
                 if metric_value < best_metric_value:
                     best_metric_value = metric_value
                     best_params = {'seasonality_mode': seasonality_mode,
                                    'changepoint_prior_scale': changepoint_prior_scale}
-
                     if verbose > 0:
-                        print(f"  Found better parameters {best_params} with {metric} value of {best_metric_value}")
+                        print(f"  Found better parameters {best_params} with MSE value of {best_metric_value}")
 
         self.fit(seasonality_mode=best_params['seasonality_mode'],
                  changepoint_prior_scale=best_params['changepoint_prior_scale'])
+
 
     def predict(self, test_data, plot=True):
         self._check_fitted()
@@ -78,12 +77,12 @@ class Prophet:
 
                 model = self._get_clean_model(seasonality_mode=self.seasonality_mode,
                                                  changepoint_prior_scale=self.changepoint_prior_scale)
-
-                model.fit(horizon_input_data)
+                with suppress_stdout_stderr():
+                    model.fit(horizon_input_data)
 
                 future = pd.DataFrame([index], columns=['ds'])
                 future = self._fill_data(future)
-                forecast = self.model.predict(future).set_index('ds')
+                forecast = model.predict(future).set_index('ds')
 
                 conf_intervals.loc[index, ['yhat_lower', 'yhat_upper']] = \
                     forecast.loc[index, ['yhat_lower', 'yhat_upper']]
@@ -134,11 +133,13 @@ class Prophet:
 
     def _get_clean_model(self, seasonality_mode, changepoint_prior_scale):
         if self.logistic_growth:
-            return fbprophet.Prophet(growth='logistic', weekly_seasonality=False, daily_seasonality=False,
+            return fbprophet.Prophet(growth='logistic', yearly_seasonality=True,
+                                     weekly_seasonality=False, daily_seasonality=False,
                                      seasonality_mode=seasonality_mode, changepoint_prior_scale=changepoint_prior_scale)
         else:
-            return fbprophet.Prophet(weekly_seasonality=False, daily_seasonality=False,
-                                     seasonality_mode=seasonality_mode, changepoint_prior_scale=changepoint_prior_scale)
+            return fbprophet.Prophet(weekly_seasonality=False, yearly_seasonality=True,
+                                     daily_seasonality=False, seasonality_mode=seasonality_mode,
+                                     changepoint_prior_scale=changepoint_prior_scale)
 
     @staticmethod
     def _concat_series(s1, s2):
@@ -157,3 +158,37 @@ class Prophet:
         full_index = pd.date_range(start=s1.index[0], end=s2.index[-1], freq='MS')
 
         return pd.concat([s1, s2]).reindex(index=full_index)
+
+    def _train_val_split(self, split_fraction):
+        split_point = int(split_fraction * len(self.train_series))
+        return self.train_series.iloc[:split_point], self.train_series.iloc[split_point:]
+
+
+class suppress_stdout_stderr(object):
+    """
+    A context manager for doing a "deep suppression" of stdout and stderr in
+    Python, i.e. will suppress all print, even if the print originates in a
+    compiled C/Fortran sub-function.
+       This will not suppress raised exceptions, since exceptions are printed
+    to stderr just before a script exits, and after the context manager has
+    exited (at least, I think that is why it lets exceptions through).
+    """
+
+    def __init__(self):
+        # Open a pair of null files
+        self.null_fds = [os.open(os.devnull, os.O_RDWR) for x in range(2)]
+        # Save the actual stdout (1) and stderr (2) file descriptors.
+        self.save_fds = (os.dup(1), os.dup(2))
+
+    def __enter__(self):
+        # Assign the null pointers to stdout and stderr.
+        os.dup2(self.null_fds[0], 1)
+        os.dup2(self.null_fds[1], 2)
+
+    def __exit__(self, *_):
+        # Re-assign the real stdout/stderr back to (1) and (2)
+        os.dup2(self.save_fds[0], 1)
+        os.dup2(self.save_fds[1], 2)
+        # Close the null files
+        os.close(self.null_fds[0])
+        os.close(self.null_fds[1])
