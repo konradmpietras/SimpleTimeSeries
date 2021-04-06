@@ -22,6 +22,7 @@ def predict_with_train_series_with_bounds():
     model.fit()
     model.predict(test_data=train_series)
 
+
 def predict_with_train_series_with_single_bound():
     train_series = pd.Series(get_ar2_process_values(n_samples=24),
                              index=pd.date_range('2013-01-01', freq='MS', periods=24))
@@ -30,6 +31,14 @@ def predict_with_train_series_with_single_bound():
     model.fit()
     model.predict(test_data=train_series)
 
+
+def predict_with_train_series_h1():
+    train_series = pd.Series(get_ar2_process_values(n_samples=24),
+                             index=pd.date_range('2013-01-01', freq='MS', periods=24))
+
+    model = Prophet(y=train_series, horizon=1)
+    model.hiperparameter_search_fit()
+    model.predict(test_data=train_series)
 
 
 def get_ar2_process_values(n_samples):
@@ -49,6 +58,7 @@ def get_ar2_process_values(n_samples):
     return ret
 
 
-predict_with_train_series()
-predict_with_train_series_with_bounds()
-predict_with_train_series_with_single_bound()
+# predict_with_train_series()
+# predict_with_train_series_with_bounds()
+# predict_with_train_series_with_single_bound()
+predict_with_train_series_h1()
