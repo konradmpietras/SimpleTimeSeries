@@ -14,7 +14,7 @@ class Prophet:
 
     def __init__(self, y, horizon=None, ub=None, lb=None):
         """
-        :param y: series with date index
+        :param y: series with monthly date index (MS)
         :param horizon: how many steps ahead model should predict values.
             If None, model will not use any information to create prediction besides train series.
         :param ub: upper bound for values in series
@@ -27,6 +27,7 @@ class Prophet:
         self.ub = ub
         self.lb = lb
 
+        # model parameters
         self.seasonality_mode = None
         self.changepoint_prior_scale = None
 
@@ -38,8 +39,7 @@ class Prophet:
                                   changepoint_prior_scale_list=[0.001, 0.01, 0.05, 0.1, 0.5],
                                   split_fraction=0.8, verbose=1):
 
-        best_metric_value = np.inf
-        best_params = None
+        best_metric_value, best_params = np.inf, {}
 
         train_series, validation_series = self._train_val_split(split_fraction=split_fraction)
 
@@ -61,45 +61,10 @@ class Prophet:
         self.fit(seasonality_mode=best_params['seasonality_mode'],
                  changepoint_prior_scale=best_params['changepoint_prior_scale'])
 
-
-    def predict(self, test_data, plot=True):
+    def predict(self, test_data, plot=True, verbose=0):
         self._check_fitted()
 
-        if self.horizon is not None:
-            prediction = pd.Series(index=test_data.index, dtype=float)
-            conf_intervals = pd.DataFrame(index=test_data.index, columns=['yhat_lower', 'yhat_upper'], dtype=float)
-
-            for index in test_data.index:
-                last_data_index = index + relativedelta(months=-self.horizon)
-
-                horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_data_index])
-                horizon_input_data = self._prepare_input_data(horizon_input_data)
-
-                model = self._get_clean_model(seasonality_mode=self.seasonality_mode,
-                                                 changepoint_prior_scale=self.changepoint_prior_scale)
-                with suppress_stdout_stderr():
-                    model.fit(horizon_input_data)
-
-                future = pd.DataFrame([index], columns=['ds'])
-                future = self._fill_data(future)
-                forecast = model.predict(future).set_index('ds')
-
-                conf_intervals.loc[index, ['yhat_lower', 'yhat_upper']] = \
-                    forecast.loc[index, ['yhat_lower', 'yhat_upper']]
-                prediction.loc[index] = forecast.loc[index, 'yhat']
-
-        else:
-            model = self._get_clean_model(seasonality_mode=self.seasonality_mode,
-                                             changepoint_prior_scale=self.changepoint_prior_scale)
-            train_data = self._prepare_input_data(self.train_series)
-            model.fit(train_data)
-
-            future = pd.DataFrame(test_data.index, columns=['ds'])
-            future = self._fill_data(future)
-            forecast = model.predict(future).set_index('ds')
-
-            conf_intervals = forecast[['yhat_lower', 'yhat_upper']]
-            prediction = forecast.yhat
+        prediction, conf_intervals = self._get_model_prediction(test_data=test_data, verbose=verbose)
 
         if plot:
             ax = test_data.plot(label='True values')
@@ -114,7 +79,6 @@ class Prophet:
 
     def _prepare_input_data(self, input_data):
         input_data = input_data.reset_index()
-
         input_data.columns = ['ds', 'y']
 
         return self._fill_data(input_data)
@@ -132,24 +96,15 @@ class Prophet:
             raise Exception("You should fit model first")
 
     def _get_clean_model(self, seasonality_mode, changepoint_prior_scale):
-        if self.logistic_growth:
-            return fbprophet.Prophet(growth='logistic', yearly_seasonality=True,
-                                     weekly_seasonality=False, daily_seasonality=False,
-                                     seasonality_mode=seasonality_mode, changepoint_prior_scale=changepoint_prior_scale)
-        else:
-            return fbprophet.Prophet(weekly_seasonality=False, yearly_seasonality=True,
-                                     daily_seasonality=False, seasonality_mode=seasonality_mode,
-                                     changepoint_prior_scale=changepoint_prior_scale)
+        growth = 'logistic' if self.logistic_growth else 'linear'
+
+        return fbprophet.Prophet(growth=growth, yearly_seasonality=True,
+                                 weekly_seasonality=False, daily_seasonality=False,
+                                 seasonality_mode=seasonality_mode, changepoint_prior_scale=changepoint_prior_scale)
 
     @staticmethod
     def _concat_series(s1, s2):
-        intersected_index = list(set(s1.index).intersection(s2.index))
-
-        if len(intersected_index) > 0:
-            if not s1.loc[intersected_index].equals(s2.loc[intersected_index]):
-                raise Exception(f"Different values for the same timesteps {s1.loc[intersected_index]} and "
-                                f"{s2.loc[intersected_index]}")
-
+        Prophet._check_overlapping(s1, s2)
         s2 = s2.loc[s1.index[-1] + relativedelta(months=1):]
 
         if len(s2) == 0:
@@ -159,9 +114,59 @@ class Prophet:
 
         return pd.concat([s1, s2]).reindex(index=full_index)
 
+    @staticmethod
+    def _check_overlapping(s1, s2):
+        intersected_index = list(set(s1.index).intersection(s2.index))
+
+        if len(intersected_index) > 0:
+            if not s1.loc[intersected_index].equals(s2.loc[intersected_index]):
+                raise Exception(f"Different values for the same timesteps {s1.loc[intersected_index]} and "
+                                f"{s2.loc[intersected_index]}")
+
     def _train_val_split(self, split_fraction):
         split_point = int(split_fraction * len(self.train_series))
         return self.train_series.iloc[:split_point], self.train_series.iloc[split_point:]
+
+    def _get_model_prediction(self, test_data, verbose):
+        if self.horizon is not None:
+            prediction = pd.Series(index=test_data.index, dtype=float)
+            conf_intervals = pd.DataFrame(index=test_data.index, columns=['yhat_lower', 'yhat_upper'], dtype=float)
+
+            for index in test_data.index:
+                last_data_index = index + relativedelta(months=-self.horizon)
+
+                horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_data_index])
+
+                forecast = self._predict_with_retrained_model(train_data=horizon_input_data, prediction_index=[index],
+                                                              verbose=verbose)
+
+                conf_intervals.loc[index, ['yhat_lower', 'yhat_upper']] = \
+                    forecast.loc[index, ['yhat_lower', 'yhat_upper']]
+                prediction.loc[index] = forecast.loc[index, 'yhat']
+
+        else:
+            forecast = self._predict_with_retrained_model(train_data=self.train_series,
+                                                          prediction_index=test_data.index, verbose=verbose)
+
+            conf_intervals = forecast[['yhat_lower', 'yhat_upper']]
+            prediction = forecast.yhat
+
+        return prediction, conf_intervals
+
+    def _predict_with_retrained_model(self, train_data, prediction_index, verbose):
+        model = self._get_clean_model(seasonality_mode=self.seasonality_mode,
+                                      changepoint_prior_scale=self.changepoint_prior_scale)
+
+        train_data = self._prepare_input_data(train_data)
+        if verbose == 0:
+            with suppress_stdout_stderr():
+                model.fit(train_data)
+        else:
+            model.fit(train_data)
+
+        future = pd.DataFrame(prediction_index, columns=['ds'])
+        future = self._fill_data(future)
+        return model.predict(future).set_index('ds')
 
 
 class suppress_stdout_stderr(object):
