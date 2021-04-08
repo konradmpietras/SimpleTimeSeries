@@ -128,28 +128,37 @@ class Prophet:
         return self.train_series.iloc[:split_point], self.train_series.iloc[split_point:]
 
     def _get_model_prediction(self, test_data, verbose):
+        """
+        returns prediction and confidence intervals tuple
+        """
+
         if self.horizon is not None:
-            prediction = pd.Series(index=test_data.index, dtype=float)
-            conf_intervals = pd.DataFrame(index=test_data.index, columns=['yhat_lower', 'yhat_upper'], dtype=float)
-
-            for index in test_data.index:
-                last_data_index = index + relativedelta(months=-self.horizon)
-
-                horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_data_index])
-
-                forecast = self._predict_with_retrained_model(train_data=horizon_input_data, prediction_index=[index],
-                                                              verbose=verbose)
-
-                conf_intervals.loc[index, ['yhat_lower', 'yhat_upper']] = \
-                    forecast.loc[index, ['yhat_lower', 'yhat_upper']]
-                prediction.loc[index] = forecast.loc[index, 'yhat']
-
+            return self._predict_with_horizon(test_data=test_data, horizon=self.horizon, verbose=verbose)
         else:
             forecast = self._predict_with_retrained_model(train_data=self.train_series,
                                                           prediction_index=test_data.index, verbose=verbose)
 
-            conf_intervals = forecast[['yhat_lower', 'yhat_upper']]
-            prediction = forecast.yhat
+            return forecast.yhat, forecast[['yhat_lower', 'yhat_upper']]
+
+    def _predict_with_horizon(self, test_data, horizon, verbose):
+        """
+        iteratively filling training data so it uses maximum range of data for given horizon making prediction for some
+        month
+        """
+
+        prediction = pd.Series(index=test_data.index, dtype=float)
+        conf_intervals = pd.DataFrame(index=test_data.index, columns=['yhat_lower', 'yhat_upper'], dtype=float)
+
+        for index in test_data.index:
+            last_input_index = index + relativedelta(months=-horizon)
+            horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_input_index])
+
+            forecast = self._predict_with_retrained_model(train_data=horizon_input_data, prediction_index=[index],
+                                                          verbose=verbose)
+
+            conf_intervals.loc[index, ['yhat_lower', 'yhat_upper']] = \
+                forecast.loc[index, ['yhat_lower', 'yhat_upper']]
+            prediction.loc[index] = forecast.loc[index, 'yhat']
 
         return prediction, conf_intervals
 
