@@ -161,11 +161,11 @@ class HoltWinters:
 
     def _get_clean_model(self, train_data, model_type, trend, seasonal):
         if model_type == 'single':
-            return SimpleExpSmoothing(train_data)
+            return SimpleExpSmoothing(train_data, initialization_method='estimated')
         elif model_type == 'double':
-            return ExponentialSmoothing(train_data, trend=trend)
+            return ExponentialSmoothing(train_data, trend=trend, initialization_method='estimated')
         elif model_type == 'triple':
-            return ExponentialSmoothing(train_data, trend=trend, seasonal=seasonal, seasonal_periods=12)
+            return ExponentialSmoothing(train_data, trend=trend, seasonal=seasonal, seasonal_periods=12, initialization_method='estimated')
         else:
             raise Exception(f"Invalid value of model_type parameter ({model_type}).\n"
                             "Allowed are: 'single', 'double' or 'triple'")
