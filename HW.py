@@ -74,14 +74,12 @@ class HoltWinters:
     def predict(self, test_data, plot=True):
         self._check_fitted()
 
-        prediction, conf_intervals = self._get_model_prediction(test_data=test_data)
+        prediction = self._get_model_prediction(test_data=test_data)
 
         if plot:
             ax = test_data.plot(label='True values')
             prediction.plot(ax=ax, label='Predicted values')
 
-            ax.fill_between(conf_intervals.index, conf_intervals.iloc[:, 0], conf_intervals.iloc[:, 1], color='k',
-                            alpha=.2)
             plt.legend()
             plt.show()
 
@@ -108,19 +106,15 @@ class HoltWinters:
          """
 
         prediction = pd.Series(index=test_data.index, dtype=float)
-        conf_intervals = pd.DataFrame(index=test_data.index, columns=['lower', 'upper'], dtype=float)
 
         for index in test_data.index:
             last_input_index = index + relativedelta(months=-horizon)
             horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_input_index])
 
-            prediction, conf_intervals = self._predict_with_retrained_model(train_data=horizon_input_data,
-                                                                            prediction_index=[index])
+            index_prediction = self._predict_with_retrained_model(train_data=horizon_input_data, prediction_index=[index])
+            prediction.loc[index] = index_prediction.loc[index]
 
-            conf_intervals.loc[index, ['lower', 'upper']] = conf_intervals.loc[index, ['lower', 'upper']]
-            prediction.loc[index] = prediction.loc[index]
-
-        return prediction, conf_intervals
+        return prediction
 
     def _predict_with_retrained_model(self, train_data, prediction_index):
         model = self._get_clean_model(train_data=train_data, model_type=self.model_type, trend=self.trend,
@@ -131,6 +125,9 @@ class HoltWinters:
         train_prediction = pd.Series(fitted_model.fittedvalues, index=train_data.index)
 
         after_train_index = pd.date_range(train_data.index[-1] + relativedelta(months=1), prediction_index[-1])
+        if len(after_train_index) == 0:
+            return train_prediction.loc[prediction_index]
+
         after_train_prediction = pd.Series(fitted_model.forecast(len(after_train_index)), index=after_train_index)
 
         model_prediction = pd.concat([train_prediction, after_train_prediction])
