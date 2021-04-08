@@ -24,9 +24,7 @@ postępowania jest założenie, że dane treningowe powinny stanowić
 minimalny zasób danych dostępnych dla modelu, a nowe napływające dane
 mogą go co najwyżej uzupełniać.
 
-W przypadku wartości None, model wykorzystuje jedynie dane treningowe do
-wykonywania predykcji.
-
+1. W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji:
     - plot_acf oraz plot_pacf
 Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
