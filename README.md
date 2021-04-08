@@ -31,18 +31,17 @@ W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykony
 przekazanych w konstruktorze
 - hiperparameter_search_fit
 
-    Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz
-wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
+    Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
 minimalne wartości metryki). W przypadku mse (mean squared error) konieczne jest
 wydzielenie zbioru walidacyjnego. W tym celu wykorzystywany jest parametr
 „split_fraction”. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80% obserwacji
 zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
 walidacyjnego na którym będzie szacowany błąd modelu.
 
-    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
-metody fit.
-⦁ fit
-Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
+    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
+- fit
+
+    Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
 ⦁ predict
 Metoda predict w dużej mierze wykorzystuje obiekt test_data. Jest to pd.Series z
