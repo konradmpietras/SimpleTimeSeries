@@ -41,10 +41,7 @@ walidacyjnego na którym będzie szacowany błąd modelu.
 
     Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
 metody fit.
-1
-
-1.
-    - fit
+⦁ fit
 Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
 ⦁ predict
