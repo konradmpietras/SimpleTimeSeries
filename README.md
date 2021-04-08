@@ -27,11 +27,11 @@ mogą go co najwyżej uzupełniać.
 W przypadku wartości None, model wykorzystuje jedynie dane treningowe do
 wykonywania predykcji.
 
-⦁ plot_acf oraz plot_pacf
+    - plot_acf oraz plot_pacf
 Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
 
-⦁ hiperparameter_search_fit
+    - hiperparameter_search_fit
 Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz
 wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
 minimalne wartości metryki). W przypadku mse (mean squared error) konieczne jest
@@ -42,7 +42,7 @@ walidacyjnego na którym będzie szacowany błąd modelu.
 Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
 metody fit.
 1
-⦁ fit
+    - fit
 Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
 ⦁ predict
