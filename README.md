@@ -3,15 +3,17 @@
 ## Sarima
 
 ### Metody w konstruktorze przyjmują dwie wartości:
-y: szereg czasowy, dla którego dopasowany zostanie model. Szereg
+**y**: szereg czasowy, dla którego dopasowany zostanie model. Szereg
 powinien mieć indeks miesięczny (MS - month start)
-horizon: wartość większa od 0 lub None. W przypadku wartości liczbowej
+
+**horizon**: wartość większa od 0 lub None. W przypadku wartości liczbowej
 oznacza to, z jakich danych może co najwyżej korzystać model podczas
 wykonywania predykcji. Przykładowo, obliczając predykcję na marzec 2020
 z horyzontem 1 miesiąc, model będzie wykorzystywał dane do lutego 2020.
 Jednak w przypadku horyzontu 2, model wykorzysta co najwyżej dane ze
 stycznia 2021. Wyjątkiem jest jedynie sytuacja, gdy dane te zostają
 przekazane jako szereg treningowy w konstruktorze.
+
 Przykładowo, jako dane treningowe wykorzystano dane
 01.01.2017-01.05.2019. Wykonując teraz predykcję dla 01.06.2019 z
 horyzontem 2 zostaną wykorzystane dane do 01.05.2019, dla 01.07.2019,
@@ -21,11 +23,14 @@ przekazane w parametrach metody predict). Uzasadnieniem takiego
 postępowania jest założenie, że dane treningowe powinny stanowić
 minimalny zasób danych dostępnych dla modelu, a nowe napływające dane
 mogą go co najwyżej uzupełniać.
+
 W przypadku wartości None, model wykorzystuje jedynie dane treningowe do
 wykonywania predykcji.
+
 ⦁ plot_acf oraz plot_pacf
 Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
+
 ⦁ hiperparameter_search_fit
 Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz
 wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
