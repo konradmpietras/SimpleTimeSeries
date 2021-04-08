@@ -25,11 +25,11 @@ minimalny zasób danych dostępnych dla modelu, a nowe napływające dane
 mogą go co najwyżej uzupełniać.
 
 W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji.
-- .plot_acf oraz plot_pacf
+- plot_acf oraz plot_pacf
 
     Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
-- .hiperparameter_search_fit
+- hiperparameter_search_fit
 
     Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz
 wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
@@ -38,7 +38,8 @@ wydzielenie zbioru walidacyjnego. W tym celu wykorzystywany jest parametr
 „split_fraction”. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80% obserwacji
 zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
 walidacyjnego na którym będzie szacowany błąd modelu.
-Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
+
+    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
 metody fit.
 1
 
