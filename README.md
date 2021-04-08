@@ -1,6 +1,8 @@
-Dokumentacja
-Sarima
-Metody w konstruktorze przyjmują dwie wartości:
+# Dokumentacja
+
+## Sarima
+
+### Metody w konstruktorze przyjmują dwie wartości:
 y: szereg czasowy, dla którego dopasowany zostanie model. Szereg
 powinien mieć indeks miesięczny (MS - month start)
 horizon: wartość większa od 0 lub None. W przypadku wartości liczbowej
