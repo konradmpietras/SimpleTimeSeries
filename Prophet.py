@@ -6,10 +6,10 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 from sklearn.metrics import mean_squared_error
 
-from BaseForecaster import BaseForecaster
+from BaseModel import BaseModel
 
 
-class Prophet(BaseForecaster):
+class Prophet(BaseModel):
     """
     Works only for monthly data (month start index)
     """

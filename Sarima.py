@@ -6,10 +6,10 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error
 from dateutil.relativedelta import relativedelta
 
-from BaseForecaster import BaseForecaster
+from BaseModel import BaseModel
 
 
-class Sarima(BaseForecaster):
+class Sarima(BaseModel):
     """
     Works only for monthly data (month start index)
     """

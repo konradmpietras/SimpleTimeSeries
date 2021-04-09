@@ -8,10 +8,10 @@ from dateutil.relativedelta import relativedelta
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from BaseForecaster import BaseForecaster
+from BaseModel import BaseModel
 
 
-class HoltWinters(BaseForecaster):
+class HoltWinters(BaseModel):
     """
     Works only for monthly data (month start index)
     """
