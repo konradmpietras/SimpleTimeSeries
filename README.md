@@ -2,7 +2,7 @@
 
 ## Sarima
 
-### Metody w konstruktorze przyjmują dwie wartości:
+### Konstruktor:
 ***y:** szereg czasowy, dla którego dopasowany zostanie model. Szereg
 powinien mieć indeks miesięczny (MS - month start)*
 
@@ -14,7 +14,7 @@ Jednak w przypadku horyzontu 2, model wykorzysta co najwyżej dane ze
 stycznia 2021. Wyjątkiem jest jedynie sytuacja, gdy dane te zostają
 przekazane jako szereg treningowy w konstruktorze.*
 
-*Przykładowo, jako dane treningowe wykorzystano dane
+*Przykładowo, jeśli jako dane treningowe wykorzystano dane
 01.01.2017-01.05.2019. Wykonując teraz predykcję dla 01.06.2019 z
 horyzontem 2 zostaną wykorzystane dane do 01.05.2019, dla 01.07.2019,
 także zostaną wykorzystane dane do 01.05.2019, natomiast dla 01.08.2019
@@ -25,27 +25,30 @@ minimalny zasób danych dostępnych dla modelu, a nowe napływające dane
 mogą go co najwyżej uzupełniać.*
 
 *W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji.*
-- plot_acf oraz plot_pacf 
+
+### Pozostałe metody:
+- **plot_acf()** oraz **plot_pacf()** 
   
   Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
-- hiperparameter_search_fit 
+- **hiperparameter_search_fit(metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
+                              D=[0, 1], Q=[0, 1], s=12, verbose=1)**
   
   Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
 minimalne wartości metryki). W przypadku mse (mean squared error) konieczne jest
 wydzielenie zbioru walidacyjnego. W tym celu wykorzystywany jest parametr
-„split_fraction”. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80% obserwacji
+*split_fraction*. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80% obserwacji
 zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
 walidacyjnego na którym będzie szacowany błąd modelu.
 
     Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
-- fit
+- **fit(order, seasonal_order)**
 
     Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
-- predict
+- **predict(test_data, plot=True)**
 
-  Metoda predict w dużej mierze wykorzystuje obiekt test_data. Jest to pd.Series z
+  Metoda predict w dużej mierze wykorzystuje obiekt *test_data*. Jest to pd.Series z
 indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
 Jest to przydatne w sytuacji, kiedy chcemy obliczyć predykcję dla miesięcy przyszłych,
 dla których nie ma jeszcze danych. Dane tego szeregu wykorzystywane są jedynie w
@@ -65,14 +68,14 @@ niż 1.**
 przedziałami ufności do rzeczywistych wartości.
   
   Metoda zwraca predykcję w formie pd.Series z indeksem jednakowym jak test_data
-- analyse_results
+- **analyse_results()**
 
   Zwraca różne przydatne informacje na temat modelu wytrenowanego na zbiorze
 treningowym przekazanym w konstruktorze. Wyświetlany jest wykres diagnostyczny
 oraz wypisywane podsumowanie w terminalu.
   
 ## Prophet
-Metody w konstruktorze przyjmują dwie wartości:
+### Konstruktor:
 
 ***y:** szereg czasowy, dla którego dopasowany zostanie model. Szereg
 powinien mieć indeks miesięczny (MS - month start)*
@@ -85,7 +88,7 @@ Jednak w przypadku horyzontu 2, model wykorzysta co najwyżej dane ze
 stycznia 2021. Wyjątkiem jest jedynie sytuacja, gdy dane te zostają
 przekazane jako szereg treningowy w konstruktorze.**
 
-*Przykładowo, jako dane treningowe wykorzystano dane
+*Przykładowo, jeśli jako dane treningowe wykorzystano dane
 01.01.2017-01.05.2019. Wykonując teraz predykcję dla 01.06.2019 z
 horyzontem 2 zostaną wykorzystane dane do 01.05.2019, dla 01.07.2019,
 także zostaną wykorzystane dane do 01.05.2019, natomiast dla 01.08.2019
@@ -98,16 +101,20 @@ mogą go co najwyżej uzupełniać.*
 *W przypadku wartości None, model wykorzystuje jedynie dane treningowe do
 wykonywania predykcji.*
 
-***lb oraz ub:** kolejno dolne oraz górne ograniczenie na dane. Jeśli
+***lb*** oraz ***ub:** kolejno dolne oraz górne ograniczenie na dane. Jeśli
 przykładowo przewidujemy zyski ze sprzedaży produktu, rozsądnym
 podejściem może być ustawienie lb na 0.*
 
-- hiperparameter_search_fit
+### Pozostałe metody:
+
+- **hiperparameter_search_fit(seasonality_modes=['additive', 'multiplicative'],
+                                  changepoint_prior_scale_list=[0.001, 0.01, 0.05, 0.1, 0.5],
+                                  split_fraction=0.8, verbose=1)**
 
   Przeszukuje wszystkie kombinacje parametrów seasonality_mode oraz
 changepoint_prior_scale. W tym celu wykorzystuje mse (mean squared error) obliczane
 na wydzielonym zbiorze walidacyjnym, którego wielkość można kontrolować za pomocą
-parametru „split_fraction”. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80%
+parametru *split_fraction*. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80%
 obserwacji zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20%
 do zbioru walidacyjnego na którym będzie szacowany błąd modelu. Wybierana jest ta
 kombinacja parametrów, która daje najmniejszą wartość błędu na zbiorze
@@ -116,7 +123,7 @@ walidacyjnym.
   Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie
 metody fit.
   
-  Z dokumentacji fbprophet:
+  **Z dokumentacji fbprophet:**
 
   **changepoint_prior_scale:** This is probably the most impactful parameter. It determines
 the flexibility of the trend, and in particular how much the trend changes at the trend
@@ -135,12 +142,12 @@ from looking at the time series and seeing if the magnitude of seasonal fluctuat
 grows with the magnitude of the time series (see the documentation here on
 multiplicative seasonality), but when that isn’t possible, it could be tuned.
   
-- fit
+- **fit(seasonality_mode='multiplicative', changepoint_prior_scale=0.05)**
 
   Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
   
-- predict
+- **predict(test_data, plot=True, verbose=0)**
 
   Metoda predict w dużej mierze wykorzystuje obiekt test_data. Jest to pd.Series z
 indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
@@ -163,3 +170,72 @@ przedziałami ufności do rzeczywistych wartości.
 Metoda zwraca predykcję w formie pd.Series z indeksem jednakowym jak test_data.
 Parametr verbose kontroluje stopień logowania informacji. Domyślny 0 nie zwraca
 żadnych informacji do konsoli.
+
+## HoltWinters
+
+### Konstruktor:
+***y:** szereg czasowy, dla którego dopasowany zostanie model. Szereg
+powinien mieć indeks miesięczny (MS - month start)*
+
+***horizon:** wartość większa od 0 lub None. W przypadku wartości liczbowej
+oznacza to, z jakich danych może co najwyżej korzystać model podczas
+wykonywania predykcji. Przykładowo, obliczając predykcję na marzec 2020
+z horyzontem 1 miesiąc, model będzie wykorzystywał dane do lutego 2020.
+Jednak w przypadku horyzontu 2, model wykorzysta co najwyżej dane ze
+stycznia 2021. Wyjątkiem jest jedynie sytuacja, gdy dane te zostają
+przekazane jako szereg treningowy w konstruktorze.*
+
+*Przykładowo, jeśli jako dane treningowe wykorzystano dane
+01.01.2017-01.05.2019. Wykonując teraz predykcję dla 01.06.2019 z
+horyzontem 2 zostaną wykorzystane dane do 01.05.2019, dla 01.07.2019,
+także zostaną wykorzystane dane do 01.05.2019, natomiast dla 01.08.2019
+zostaną już wykorzystane dane do 01.06.2019 (o ile zostały one
+przekazane w parametrach metody predict). Uzasadnieniem takiego
+postępowania jest założenie, że dane treningowe powinny stanowić
+minimalny zasób danych dostępnych dla modelu, a nowe napływające dane
+mogą go co najwyżej uzupełniać.*
+
+*W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji.*
+
+### Pozostałe metody:
+- **decompose_train_data** 
+  
+  Dekompozycja danych przekazanych w konstruktorze pozwalająca na sprawdzenie, który typ modelu lepiej sprawdzi się w tym przypadku ('additive', czy 'multiplicative')
+- **hiperparameter_search_fit(split_fraction=0.8, model_types=['single', 'double', 'triple'],
+                                  trend_types=['additive', 'multiplicative'],
+                                  seasonal_types=['additive', 'multiplicative'], verbose=1)**
+  
+  Przeszukuje wszystkie kombinacje parametrów oraz wybiera najlepsze hiperparametry w kontekście MSE (dla której mamy
+minimalne wartości metryki). W tym celu konieczne jest
+wydzielenie zbioru walidacyjnego, który można kontrolować poprzez parametr
+*split_fraction*. Przykładowo, dla domyślnej wartości 0.8, pierwsze 80% obserwacji
+zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
+walidacyjnego na którym będzie szacowany błąd modelu.
+
+    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
+- **fit(model_type, trend_type, seasonal_type)**
+
+    Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
+aby móc wykonywać predykcje.
+- **predict(test_data, plot=True)**
+
+  Metoda predict w dużej mierze wykorzystuje obiekt *test_data*. Jest to pd.Series z
+indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
+Jest to przydatne w sytuacji, kiedy chcemy obliczyć predykcję dla miesięcy przyszłych,
+dla których nie ma jeszcze danych. Dane tego szeregu wykorzystywane są jedynie w
+przypadku horizon ustawionego na wartość liczbową większą od zera w konstruktorze
+(czyli inną niż None). W takiej sytuacji wykonując predykcje dla pewnego momentu,
+algorytm będzie próbował uzupełnić dane treningowe o test_data, które poprzedzają
+bieżący moment o co najmniej tyle miesięcy ile wynosi horizon. Za każdym razem
+tworzony będzie nowy model, jednak wszystkie te modele zachowają te same
+parametry order oraz seasonal_order.
+  
+  **Warto pamiętać, że zbiór treningowy nie jest nigdy ograniczany. Czyli wykonując
+predykcję na luty 2020, jeśli w danych treningowych był dostępny styczeń 2020 to
+zostanie on wykorzystany do wykonania predykcji nawet jeśli horyzont jest większy
+niż 1.**
+  
+  W przypadku ustawienia plot=True, rysowany jest wykres porównujący predykcję wraz z
+przedziałami ufności do rzeczywistych wartości.
+  
+  Metoda zwraca predykcję w formie pd.Series z indeksem jednakowym jak test_data
