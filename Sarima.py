@@ -6,8 +6,10 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error
 from dateutil.relativedelta import relativedelta
 
+from BaseForecaster import BaseForecaster
 
-class Sarima:
+
+class Sarima(BaseForecaster):
     """
     Works only for monthly data (month start index)
     """
@@ -114,13 +116,7 @@ class Sarima:
             prediction = prediction_data.predicted_mean
 
         if plot:
-            ax = test_data.plot(label='True values')
-            prediction.plot(ax=ax, label='Predicted values')
-
-            ax.fill_between(conf_intervals.index, conf_intervals.iloc[:, 0], conf_intervals.iloc[:, 1], color='k',
-                            alpha=.2)
-            plt.legend()
-            plt.show()
+            self.plot_predictions(true_values=test_data, prediction=prediction, conf_intervals=conf_intervals)
 
         return prediction
 

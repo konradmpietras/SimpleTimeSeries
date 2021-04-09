@@ -8,8 +8,10 @@ from dateutil.relativedelta import relativedelta
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
+from BaseForecaster import BaseForecaster
 
-class HoltWinters:
+
+class HoltWinters(BaseForecaster):
     """
     Works only for monthly data (month start index)
     """
@@ -75,20 +77,7 @@ class HoltWinters:
         prediction = self._get_model_prediction(test_data=test_data)
 
         if plot:
-            plt.subplot(2, 1, 1)
-            test_data.plot(label='True values', color='blue')
-            prediction.plot(label='Predicted values', color='C1', style='--')
-            plt.legend()
-
-            ax2 = plt.subplot(2, 2, 3)
-            test_data.plot(label='True values', color='blue')
-            plt.legend()
-
-            plt.subplot(2, 2, 4, sharey=ax2)
-            prediction.plot(label='Predicted values', color='C1')
-            plt.legend()
-
-            plt.show()
+            self.plot_predictions(true_values=test_data, prediction=prediction)
 
         return prediction
 
