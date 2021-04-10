@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 
 def seasonal_decompose(y):
@@ -18,3 +19,13 @@ def plot_differenced_series(y, d):
 
     y.plot()
     plt.show()
+
+
+def test_if_stationary(y, conf_level=0.05):
+    p_value = sm.tsa.stattools.adfuller(y)[1]
+
+    print(f"Received p-value of {p_value}")
+    if p_value > conf_level:
+        print("Null hypothesis can not be rejected. Series seems to be not stationary")
+    else:
+        print("Null hypothesis is rejected. Series seems to be stationary")
