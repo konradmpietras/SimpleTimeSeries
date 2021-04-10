@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
 
-def seasonal_decompose(y):
+def seasonal_decompose(y, model='additive'):
     import statsmodels.api as sm
 
     from pylab import rcParams
     rcParams['figure.figsize'] = 18, 12
 
-    decomposition = sm.tsa.seasonal_decompose(y, model='additive')
+    decomposition = sm.tsa.seasonal_decompose(y, model=model)
     decomposition.plot()
     plt.show()
 
