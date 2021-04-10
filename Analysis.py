@@ -26,6 +26,6 @@ def test_if_stationary(y, conf_level=0.05):
 
     print(f"Received p-value of {p_value}")
     if p_value > conf_level:
-        print("Null hypothesis can not be rejected. Series seems to be not stationary")
+        print("Null hypothesis can not be rejected. Series seems to be non-stationary")
     else:
         print("Null hypothesis is rejected. Series seems to be stationary")

@@ -101,7 +101,7 @@ class Sarima(BaseModel):
                 horizon_input_data = self._concat_series(self.train_series, test_data.loc[:last_data_index])
                 model = Sarima._get_clean_model(y=horizon_input_data, order=self.order_params,
                                                 seasonal_order=self.seasonal_order_params)
-                results = model.fit()
+                results = model.fit(disp=-1)
                 prediction_data = results.get_prediction(start=index, end=index)
 
                 conf_intervals.loc[index, ['lower y', 'upper y']] = prediction_data.conf_int().loc[index]
@@ -109,7 +109,7 @@ class Sarima(BaseModel):
 
         else:
             model = Sarima._get_clean_model(y=self.train_series, order=self.order_params, seasonal_order=self.seasonal_order_params)
-            results = model.fit()
+            results = model.fit(disp=-1)
 
             prediction_data = results.get_prediction(start=test_data.index[0], end=test_data.index[-1])
             conf_intervals = prediction_data.conf_int()
@@ -126,7 +126,7 @@ class Sarima(BaseModel):
         model = Sarima._get_clean_model(y=self.train_series, order=self.order_params,
                                         seasonal_order=self.seasonal_order_params)
 
-        results = model.fit()
+        results = model.fit(disp=-1)
         results.plot_diagnostics(figsize=(15, 12))
         plt.show()
 
@@ -148,7 +148,7 @@ class Sarima(BaseModel):
 
         for order, seasonal_order in search_space:
             model = self._get_clean_model(y=self.train_series, order=order, seasonal_order=seasonal_order)
-            results = model.fit()
+            results = model.fit(disp=-1)
 
             if metric == 'AIC':
                 metric_value = results.aic
