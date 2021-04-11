@@ -118,10 +118,11 @@ podejściem może być ustawienie lb na 0.*
 
 ### Pozostałe metody:
 
-- **hiperparameter_search_fit(seasonality_modes=['additive', 'multiplicative'],
+```python
+hiperparameter_search_fit(seasonality_modes=['additive', 'multiplicative'],
                                   changepoint_prior_scale_list=[0.001, 0.01, 0.05, 0.1, 0.5],
-                                  split_fraction=0.8, verbose=1)**
-
+                                  split_fraction=0.8, verbose=1)
+```
   Przeszukuje wszystkie kombinacje parametrów seasonality_mode oraz
 changepoint_prior_scale. W tym celu wykorzystuje mse (mean squared error) obliczane
 na wydzielonym zbiorze walidacyjnym, którego wielkość można kontrolować za pomocą
