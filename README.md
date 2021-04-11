@@ -28,7 +28,8 @@ mogą go co najwyżej uzupełniać.*
 
 ### Pozostałe metody:
 ```python
-plot_acf() oraz plot_pacf()
+plot_acf()
+plot_pacf()
 ```
   
   Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
