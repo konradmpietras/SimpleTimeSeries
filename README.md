@@ -46,12 +46,16 @@ wydzielenie zbioru walidacyjnego. W tym celu wykorzystywany jest parametr
 zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
 walidacyjnego na którym będzie szacowany błąd modelu.
 
-    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
-- **fit(order, seasonal_order)**
+  Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
+```python
+fit(order, seasonal_order)
+```
 
-    Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
+  Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
-- **predict(test_data, plot=True)**
+```python
+predict(test_data, plot=True)
+```
 
   Metoda predict w dużej mierze wykorzystuje obiekt *test_data*. Jest to pd.Series z
 indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
@@ -73,7 +77,9 @@ niż 1.**
 przedziałami ufności do rzeczywistych wartości.
   
   Metoda zwraca predykcję w formie pd.Series z indeksem jednakowym jak test_data
-- **analyse_results()**
+```python
+analyse_results()
+```
 
   Zwraca różne przydatne informacje na temat modelu wytrenowanego na zbiorze
 treningowym przekazanym w konstruktorze. Wyświetlany jest wykres diagnostyczny
