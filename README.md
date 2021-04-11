@@ -217,7 +217,9 @@ walidacyjnego na którym będzie szacowany błąd modelu.
 
     Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
-- **predict(test_data, plot=True)**
+```python
+predict(test_data, plot=True)
+```
 
   Metoda predict w dużej mierze wykorzystuje obiekt *test_data*. Jest to pd.Series z
 indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
