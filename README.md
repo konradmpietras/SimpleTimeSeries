@@ -154,13 +154,16 @@ from looking at the time series and seeing if the magnitude of seasonal fluctuat
 grows with the magnitude of the time series (see the documentation here on
 multiplicative seasonality), but when that isn’t possible, it could be tuned.
   
-- **fit(seasonality_mode='multiplicative', changepoint_prior_scale=0.05)**
+```python
+fit(seasonality_mode='multiplicative', changepoint_prior_scale=0.05)
+```
 
   Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
   
-- **predict(test_data, plot=True, verbose=0)**
-
+```python
+predict(test_data, plot=True, verbose=0)
+```
   Metoda predict w dużej mierze wykorzystuje obiekt test_data. Jest to pd.Series z
 indeksem, dla którego zostanie wygenerowana predykcja. Szereg może zawierać NaNy.
 Jest to przydatne w sytuacji, kiedy chcemy obliczyć predykcję dla miesięcy przyszłych,
@@ -210,12 +213,16 @@ mogą go co najwyżej uzupełniać.*
 *W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji.*
 
 ### Pozostałe metody:
-- **decompose_train_data** 
+```python
+decompose_train_data()
+```
   
   Dekompozycja danych przekazanych w konstruktorze pozwalająca na sprawdzenie, który typ modelu lepiej sprawdzi się w tym przypadku ('additive', czy 'multiplicative')
-- **hiperparameter_search_fit(split_fraction=0.8, model_types=['single', 'double', 'triple'],
+```python
+hiperparameter_search_fit(split_fraction=0.8, model_types=['single', 'double', 'triple'],
                                   trend_types=['additive', 'multiplicative'],
-                                  seasonal_types=['additive', 'multiplicative'], verbose=1)**
+                                  seasonal_types=['additive', 'multiplicative'], verbose=1)
+```
   
   Przeszukuje wszystkie kombinacje parametrów oraz wybiera najlepsze hiperparametry w kontekście MSE (dla której mamy
 minimalne wartości metryki). W tym celu konieczne jest
@@ -224,10 +231,12 @@ wydzielenie zbioru walidacyjnego, który można kontrolować poprzez parametr
 zostanie przydzielonych do zbioru treningowego, natomiast pozostałe 20% do zbioru
 walidacyjnego na którym będzie szacowany błąd modelu.
 
-    Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
-- **fit(model_type, trend_type, seasonal_type)**
+  Wybrane parametry służą do budowania modelu. Nie jest konieczne wywoływanie metody fit.
+```python
+fit(model_type, trend_type, seasonal_type)
+```
 
-    Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
+  Drugi sposób po hiperparameter_search_fit na ustawienie odpowiednich parametrów
 aby móc wykonywać predykcje.
 ```python
 predict(test_data, plot=True)
