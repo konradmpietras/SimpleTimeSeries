@@ -34,8 +34,10 @@ plot_pacf()
   
   Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
-- **hiperparameter_search_fit(metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
-                              D=[0, 1], Q=[0, 1], s=12, verbose=1)**
+```python
+hiperparameter_search_fit(metric, split_fraction=0.8,  p=[0, 1, 2], d=[0, 1, 2], q=[0, 1, 2], P=[0, 1],
+                              D=[0, 1], Q=[0, 1], s=12, verbose=1)
+```
   
   Przeszukuje wszystkie kombinacje parametrów p, d, q, P, D, Q z wybranym s oraz wybiera najlepsze hiperparametry w kontekście przekazanej metryki (dla której mamy
 minimalne wartości metryki). W przypadku mse (mean squared error) konieczne jest
