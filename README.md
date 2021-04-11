@@ -27,7 +27,9 @@ mogą go co najwyżej uzupełniać.*
 *W przypadku wartości None, model wykorzystuje jedynie dane treningowe do wykonywania predykcji.*
 
 ### Pozostałe metody:
-- **plot_acf()** oraz **plot_pacf()** 
+```python
+plot_acf() oraz plot_pacf()
+```
   
   Obie powyższe metody rysują odpowiednie wykresy dla danych treningowych
 przekazanych w konstruktorze
